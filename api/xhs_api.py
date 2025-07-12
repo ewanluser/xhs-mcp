@@ -86,19 +86,29 @@ class XhsApi:
         uri = '/api/sns/web/v2/user/me'
         return await self.request(uri,method="GET")
 
-    async def search_notes(self, keywords: str, limit: int = 20) -> Dict:
+    async def search_notes(self, keywords: str, page: int = 1, limit: int = 20) -> Dict:
         data={
             "keyword":keywords,
-            "page":1,
+            "page":page,
             "page_size":limit,
             "search_id":self.search_id(),
             "sort":"general",
             "note_type":0,
             "ext_flags":[],
             "geo":"",
-            "image_formats":json.dumps(["jpg","webp","avif"], separators=(",", ":"))
+            "image_formats":'["jpg","webp","avif"]'
         }
-        return await self.request("/api/sns/web/v1/search/notes",method="POST",data=data)
+        uri="/api/sns/web/v1/search/notes"
+        p={"uri":uri,"method":"POST","data":data}
+        headers = {
+            'content-type': 'application/json;charset=UTF-8',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
+        }
+        xsxt=json.loads(self.get_xs_xt(uri,data,self._cookie))
+        headers['x-s']=xsxt['X-s']
+        headers['x-t']=str(xsxt['X-t'])
+        return await self.request(**p,headers=headers)
+
 
     async def home_feed(self) -> Dict:
 
@@ -149,14 +159,14 @@ class XhsApi:
 
         return await self.request(**p,headers=headers)
 
-    async def get_note_comments(self,note_id:str,xsec_token:str) -> Dict:
+    async def get_note_comments(self,note_id:str,xsec_token:str, cursor:str="",top_comment_id: str = "") -> Dict:
         uri = '/api/sns/web/v2/comment/page'
         # 680a25a4000000001c02d251
         # ABzm9YfVyNA1hsY-KwU7ybKNWlkpb8__t-jF9FwGKzZz0=
         params = {
             'note_id': note_id,
-            'cursor': '',
-            'top_comment_id': '',
+            'cursor': cursor,
+            'top_comment_id': top_comment_id,
             'image_formats': 'jpg,webp,avif',
             'xsec_token': xsec_token
         }
